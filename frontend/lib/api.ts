@@ -1,4 +1,6 @@
-const BASE = (process.env.EXPO_PUBLIC_API_URL ?? "").trim();
+
+const BASE = "http://192.168.12.197:4000";
+
 console.log("🔎 BASE =", BASE);
 
 type ApiOpts = {
@@ -8,7 +10,8 @@ type ApiOpts = {
 };
 
 export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T> {
-  const url = path.startsWith("http") ? path : `${BASE}${path}`;
+  // usamos BASE SIEMPRE
+  const url = `${BASE}${path}`;
   console.log("[API] →", url, opts.method ?? "GET");
 
   try {
