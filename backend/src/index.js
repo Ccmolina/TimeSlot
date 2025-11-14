@@ -12,7 +12,7 @@ import { pool } from "./db.js";
 const app = express();
 
 
-const ORIGIN = process.env.CORS_ORIGIN || true; // o poné tu dominio/IP aquí
+const ORIGIN = process.env.CORS_ORIGIN || true; 
 app.use(cors({ origin: ORIGIN, credentials: true }));
 app.use(express.json());
 

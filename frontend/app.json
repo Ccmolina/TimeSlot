@@ -6,6 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+     "EXPO_PUBLIC_API_URL": "http://192.168.12.197:4000",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",

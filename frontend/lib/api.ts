@@ -1,5 +1,5 @@
-
 const BASE = (process.env.EXPO_PUBLIC_API_URL ?? "").trim();
+console.log("🔎 BASE =", BASE);
 
 type ApiOpts = {
   method?: string;

@@ -14,13 +14,17 @@ export default function Login() {
 
   const onLogin = async () => {
     if (!email.trim() || !pass.trim()) return alert("Ingresa tu correo y contraseña");
+
     try {
       setLoading(true);
+
       const data = await api<{ token: string; user: any }>("/api/auth/login", {
         method: "POST",
-        body: { email: email.trim(), password: pass },
+        body: { email: email.trim(), password: pass.trim() },
       });
+
       await SecureStore.setItemAsync("token", data.token);
+
       router.replace("/home");
     } catch (e: any) {
       alert(e?.message || "Error al iniciar sesión");
@@ -32,7 +36,6 @@ export default function Login() {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        {/* Usa tu logo local. Si aún no lo tienes, comenta esta línea */}
         <Image source={require("../../assets/logo.png")} style={s.logo} resizeMode="contain" />
         <Text style={s.h1}>Bienvenido</Text>
         <Text style={s.h2}>a TimeSlot</Text>
@@ -102,7 +105,6 @@ const s = StyleSheet.create({
     fontSize: 36,
     fontWeight: "800",
     letterSpacing: 0.3,
-    fontFamily: Platform.select({ ios: "Times New Roman", android: "serif", default: "serif" }),
   },
   h2: { color: "#E6F1F4", fontSize: 16, fontWeight: "700", marginTop: 2 },
   card: {
@@ -120,9 +122,23 @@ const s = StyleSheet.create({
     elevation: 4,
   },
   label: { color: "#0E3A46", fontWeight: "700", marginBottom: 6 },
-  input: { height: 42, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#F9FAFB", borderRadius: 8, paddingHorizontal: 12, color: "#111827" },
+  input: {
+    height: 42,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    color: "#111827",
+  },
   helperLink: { color: "#6B7280", fontSize: 12 },
-  primaryBtn: { backgroundColor: "#0E3A46", paddingVertical: 12, borderRadius: 10, marginTop: 14, alignItems: "center" },
+  primaryBtn: {
+    backgroundColor: "#0E3A46",
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 14,
+    alignItems: "center",
+  },
   primaryBtnText: { color: "#fff", fontWeight: "700" },
   registerText: { color: "#121314fc" },
   registerLink: { color: "#125496ff", fontWeight: "700" },
