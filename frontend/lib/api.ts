@@ -10,7 +10,6 @@ type ApiOpts = {
 };
 
 export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T> {
-  // usamos BASE SIEMPRE
   const url = `${BASE}${path}`;
   console.log("[API] →", url, opts.method ?? "GET");
 

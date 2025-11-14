@@ -3,14 +3,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log("🔎 DB_NAME en runtime:", process.env.DB_NAME);
+const DB_HOST = process.env.DB_HOST || "localhost"; 
+const DB_USER = process.env.DB_USER || "root";
+const DB_PASSWORD = process.env.DB_PASSWORD || "1234";
+const DB_NAME = process.env.DB_NAME || "TimeSlot";
 
 export const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD || undefined,
-  database: "TimeSlot",
-  port: Number(process.env.DB_PORT || 3306),
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 10,
+  queueLimit: 0,
 });
