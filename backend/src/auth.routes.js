@@ -1,3 +1,4 @@
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -111,7 +112,7 @@ r.post("/forgot", async (req, res) => {
     const userId = rows[0].id;
 
     const token = crypto.randomBytes(20).toString("hex");
-    const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+    const expires = new Date(Date.now() + 1000 * 60 * 30);
 
     await pool.query(
       `INSERT INTO password_resets (user_id, token, expires_at)

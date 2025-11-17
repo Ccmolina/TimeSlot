@@ -12,6 +12,16 @@ export default function Login() {
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
 
+const saveToken = async (token: string, user: any) => {
+    if (Platform.OS === "web") {
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      await SecureStore.setItemAsync("token", token);
+      await SecureStore.setItemAsync("user", JSON.stringify(user));
+    }
+  };
+
   const onLogin = async () => {
     if (!email.trim() || !pass.trim()) {
       return alert("Ingresa tu correo y contraseña");
@@ -25,8 +35,7 @@ export default function Login() {
         body: { email: email.trim(), password: pass.trim() },
       });
 
-      await SecureStore.setItemAsync("token", data.token);
-      await SecureStore.setItemAsync("user", JSON.stringify(data.user));
+      await saveToken(data.token, data.user);
 
       router.replace("/home");
     } catch (e: any) {

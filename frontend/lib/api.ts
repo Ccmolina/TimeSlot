@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE = "http://192.168.12.197:4000";
+const BASE = "http://10.8.54.121:4000";
 
 console.log("🔎 BASE =", BASE);
 
@@ -20,7 +20,7 @@ export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T>
 
   if (useAuth && Platform.OS !== "web") {
     try {
-      const token = await SecureStore.getItemAsync("token");
+      const token = await AsyncStorage.getItem("token");
       if (token) {
         authHeader.Authorization = `Bearer ${token}`;
       }
