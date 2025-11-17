@@ -126,6 +126,12 @@ export default function Home() {
           <Text style={s.bottomIcon}>🏠</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={() => router.replace("/admin/AsignacionScreen")}
+          style={s.bottomBtn}
+        >
+          <Text style={s.bottomIcon}>A</Text>
+        </TouchableOpacity>
         
         <View style={s.chatBotBtn}>
           <Text style={s.chatIcon}>🤖</Text>
