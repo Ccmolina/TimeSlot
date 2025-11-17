@@ -13,7 +13,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const onLogin = async () => {
-    if (!email.trim() || !pass.trim()) return alert("Ingresa tu correo y contraseña");
+    if (!email.trim() || !pass.trim()) {
+      return alert("Ingresa tu correo y contraseña");
+    }
 
     try {
       setLoading(true);
@@ -24,6 +26,7 @@ export default function Login() {
       });
 
       await SecureStore.setItemAsync("token", data.token);
+      await SecureStore.setItemAsync("user", JSON.stringify(data.user));
 
       router.replace("/home");
     } catch (e: any) {
@@ -41,8 +44,14 @@ export default function Login() {
         <Text style={s.h2}>a TimeSlot</Text>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, width: "100%" }}>
-        <ScrollView contentContainerStyle={{ alignItems: "center", paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1, width: "100%" }}
+      >
+        <ScrollView
+          contentContainerStyle={{ alignItems: "center", paddingBottom: 24 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={s.card}>
             <Text style={s.label}>Correo:</Text>
             <TextInput
@@ -65,12 +74,17 @@ export default function Login() {
               placeholderTextColor="#9AA3AF"
             />
 
-            <TouchableOpacity onPress={() => router.push("/auth/forgot")} style={{ alignSelf: "center", marginTop: 8 }}>
+            <TouchableOpacity
+              onPress={() => router.push("/auth/forgot")}
+              style={{ alignSelf: "center", marginTop: 8 }}
+            >
               <Text style={s.helperLink}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={s.primaryBtn} onPress={onLogin} disabled={loading}>
-              <Text style={s.primaryBtnText}>{loading ? "Ingresando..." : "Iniciar Sesión"}</Text>
+              <Text style={s.primaryBtnText}>
+                {loading ? "Ingresando..." : "Iniciar Sesión"}
+              </Text>
             </TouchableOpacity>
           </View>
 

@@ -1,16 +1,34 @@
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 const BASE = "http://192.168.12.197:4000";
 
 console.log("🔎 BASE =", BASE);
 
-type ApiOpts = {
+export type ApiOpts = {
   method?: string;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
+  withAuth?: boolean;
 };
 
 export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T> {
   const url = `${BASE}${path}`;
+  const useAuth = opts.withAuth ?? true;
+
+  let authHeader: Record<string, string> = {};
+
+  if (useAuth && Platform.OS !== "web") {
+    try {
+      const token = await SecureStore.getItemAsync("token");
+      if (token) {
+        authHeader.Authorization = `Bearer ${token}`;
+      }
+    } catch (err) {
+      console.log("[API] no se pudo leer token:", err);
+    }
+  }
+
   console.log("[API] →", url, opts.method ?? "GET");
 
   try {
@@ -18,28 +36,35 @@ export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T>
       method: opts.method ?? "GET",
       headers: {
         "Content-Type": "application/json",
+        ...authHeader,
         ...(opts.headers ?? {}),
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
 
     const text = await res.text();
-    let data: any = null;
+    let data: unknown = null;
 
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch (e) {
-      console.log("[API] respuesta no JSON:", text);
-      throw new Error("Respuesta no válida del servidor");
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.log("[API] respuesta no JSON:", text);
+        throw new Error("Respuesta no válida del servidor");
+      }
     }
 
     if (!res.ok) {
-      throw new Error(data?.error || `HTTP ${res.status}`);
+      const d = data as any;
+      throw new Error(d?.error || `HTTP ${res.status}`);
     }
 
     return data as T;
-  } catch (e: any) {
-    console.log("[API] error:", e?.message);
+  } catch (e) {
+    console.log("[API] error:", e instanceof Error ? e.message : e);
+    if (e instanceof Error) {
+      throw e;
+    }
     throw new Error("No se pudo conectar con el servidor");
   }
 }

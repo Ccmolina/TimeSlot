@@ -2,7 +2,7 @@ import { Router } from "express";
 import jwt from "jsonwebtoken";
 
 const r = Router();
-const reservas = []; // {id, userId, area, profesional, fechaISO, hora, modalidad}
+const reservas = []; 
 
 function auth(req, res, next) {
   const h = req.headers.authorization || "";

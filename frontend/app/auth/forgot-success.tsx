@@ -6,8 +6,6 @@ export default function ForgotSuccess() {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        {/* Evito warnings de imagen vacía. Si tienes un logo local, descomenta y ajústalo: */}
-        {/* <Image source={require("../../assets/logo.png")} style={s.logo} resizeMode="contain" /> */}
         <Text style={s.h1}>Bienvenido</Text>
         <Text style={s.h2}>a TimeSlot</Text>
       </View>

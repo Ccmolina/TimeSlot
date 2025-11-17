@@ -1,6 +1,14 @@
-import React from "react"; 
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useReservas, type Reserva } from "./store/reservas";
 
 function toDDMMYYYY(iso: string): string {
@@ -10,36 +18,88 @@ function toDDMMYYYY(iso: string): string {
 
 export default function Home() {
   const { reservas } = useReservas();
+  const [nombre, setNombre] = useState<string>("");
+
+  useEffect(() => {
+    SecureStore.getItemAsync("userName").then((value) => {
+      if (value) setNombre(value);
+      else setNombre("Georgia");
+    });
+  }, []);
+
+  const tieneReservas = reservas.length > 0;
 
   return (
     <View style={s.container}>
+      <View style={s.bgCircleTop} />
+      <View style={s.bgCircleMid} />
+
+
       <View style={s.header}>
-        <Text style={s.hTop}>Hello,{"\n"}Georgia</Text>
+        <Image
+          source={{ uri: "https://i.pravatar.cc/150" }}
+          style={s.avatar}
+        />
+        <View>
+          <Text style={s.hello}>Hello,</Text>
+          <Text style={s.username}>{nombre}</Text>
+        </View>
+        <Text style={s.bell}>🔔</Text>
       </View>
 
-      <View style={{ paddingHorizontal: 16, marginTop: 10 }}>
-        <Text style={s.sectionTitle}>Mis reservas</Text>
 
+      <View style={s.titleWrapper}>
+        <View style={s.titleRow}>
+          <View style={s.titleLine} />
+          <Text style={s.titleText}>Mis reservas</Text>
+          <View style={s.titleLine} />
+        </View>
+
+        <View style={s.statsChip}>
+          <Text style={s.statsText}>
+            {tieneReservas
+              ? `Tienes ${reservas.length} reserva${
+                  reservas.length > 1 ? "s" : ""
+                }`
+              : "Cuando crees una reserva aparecerá aquí"}
+          </Text>
+        </View>
+      </View>
+
+
+      <View style={s.cardListWrapper}>
         <View style={s.cardList}>
           <View style={s.tableHeader}>
-            <Text style={[s.th, { width: 110 }]}>Fecha</Text>
-            <Text style={[s.th, { flex: 1 }]}>Medico</Text>
+            <Text style={[s.th, { width: "35%" }]}>Fecha</Text>
+            <Text style={[s.th, { width: "65%" }]}>Medico</Text>
           </View>
 
-          <ScrollView style={{ maxHeight: 420 }}>
+
+          <ScrollView
+            style={s.scroll}
+            contentContainerStyle={
+              reservas.length === 0 ? { paddingVertical: 18 } : undefined
+            }
+          >
             {reservas.length === 0 ? (
-              <Text style={{ color: "#6B7280", padding: 12 }}>Aún no tienes reservas.</Text>
+              <Text style={s.emptyText}>Aún no tienes reservas.</Text>
             ) : (
               reservas.map((r: Reserva) => (
                 <View key={r.id} style={s.row}>
-                  <View style={{ width: 110 }}>
+                  <View style={s.colFecha}>
                     <Text style={s.date}>{toDDMMYYYY(r.fechaISO)}</Text>
-                    <Text style={s.date}>{r.hora}</Text>
+                    <Text style={s.hour}>{r.hora}</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
+
+                
+                  <View style={s.colMedico}>
                     <Text style={s.doctor}>{r.profesional}</Text>
                     <Text style={s.meta}>Especialidad: {r.area}</Text>
-                    <Text style={s.meta}>Modalidad: {r.modalidad ?? "Presencial"}</Text>
+                    <View style={s.badge}>
+                      <Text style={s.badgeText}>
+                        {r.modalidad ?? "Presencial"}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))
@@ -48,102 +108,294 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Bottom bar */}
+
+      <View style={s.centerBackground} />
+
+
       <View style={s.bottomBar}>
-        <TouchableOpacity onPress={() => router.replace("/home")} style={s.bottomBtn}>
+        <TouchableOpacity
+          onPress={() => router.replace("/home")}
+          style={s.bottomBtn}
+        >
           <Text style={s.bottomIcon}>🏠</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/reservas/nueva")} style={s.fab}>
-          <Text style={{ color: "#fff", fontWeight: "800" }}>TIMESLOT</Text>
-        </TouchableOpacity>
+        
+        <View style={s.chatBotBtn}>
+          <Text style={s.chatIcon}>🤖</Text>
+        </View>
 
-        <TouchableOpacity onPress={() => router.push("/perfil")} style={s.bottomBtn}>
+       
+        <TouchableOpacity
+          onPress={() => router.push("/reservas/nueva")}
+          style={s.bottomBtn}
+        >
           <Text style={s.bottomIcon}>📅</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={s.bottomLeft} />
-      <View style={s.bottomRight} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc" },
+  container: {
+    flex: 1,
+    backgroundColor: "#EEF3F6",
+    paddingBottom: 110,
+  },
+
+
+  bgCircleTop: {
+    position: "absolute",
+    top: -60,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "#D8E9EE",
+    opacity: 0.5,
+  },
+  bgCircleMid: {
+    position: "absolute",
+    top: 260,
+    left: -50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#E1EBF3",
+    opacity: 0.6,
+  },
+
+
   header: {
     backgroundColor: "#0E3A46",
     width: "100%",
-    height: 110,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
+    height: 130,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 7,
+    elevation: 5,
+    zIndex: 2,
   },
-  hTop: { color: "#E6F1F4", fontSize: 18, fontWeight: "700" },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
+  },
+  hello: {
+    color: "#D8E9EE",
+    fontSize: 13,
+  },
+  username: {
+    color: "#FFFFFF",
+    fontSize: 19,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  bell: {
+    marginLeft: "auto",
+    fontSize: 22,
+    color: "#FFFFFF",
+  },
 
-  sectionTitle: {
-    alignSelf: "center",
+
+  titleWrapper: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  titleLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#CAD3DC",
+  },
+  titleText: {
+    marginHorizontal: 12,
     fontSize: 22,
     color: "#0E3A46",
-    fontWeight: "800",
-    marginVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: "#0E3A46",
-    width: 180,
+    fontWeight: "600",
+  },
+  statsChip: {
+    marginTop: 10,
+    alignSelf: "center", 
+    backgroundColor: "#D0E9E6",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  statsText: {
+    fontSize: 11,
+    color: "#0E3A46",
+    fontWeight: "600",
+  },
+
+
+  cardListWrapper: {
+    marginTop: 14,
+    alignItems: "center",
+  },
+  cardList: {
+    width: "90%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#0E3A46", // mismo azul que la página
+    overflow: "hidden",
+    paddingBottom: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tableHeader: {
+    backgroundColor: "#E6EDF2",
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  th: {
+    color: "#374151",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  scroll: {
+    maxHeight: 430,
+  },
+
+  row: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F3F5",
+  },
+  colFecha: {
+    width: "35%",
+  },
+  colMedico: {
+    width: "65%",
+    paddingLeft: 4,
+  },
+
+  date: {
+    color: "#111827",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  hour: {
+    color: "#4B5563",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  doctor: {
+    color: "#111827",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  meta: {
+    color: "#4B5563",
+    fontSize: 11,
+    marginTop: 2,
+  },
+
+  badge: {
+    marginTop: 4,
+    alignSelf: "flex-start",
+    backgroundColor: "#D0E9E6",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+  },
+  badgeText: {
+    color: "#0E3A46",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+
+  emptyText: {
+    color: "#6B7280",
+    fontSize: 13,
     textAlign: "center",
   },
 
-  cardList: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    overflow: "hidden",
+
+  centerBackground: {
+    position: "absolute",
+    bottom: 78,
+    alignSelf: "center",
+    width: 110,
+    height: 72,
+    backgroundColor: "#DDE3EA",
+    borderTopLeftRadius: 60,
+    borderTopRightRadius: 60,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  tableHeader: {
-    backgroundColor: "#EDF2F7",
-    flexDirection: "row",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  th: { color: "#0E3A46", fontWeight: "800", fontSize: 13 },
-  row: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-  },
-  date: { color: "#111827", fontWeight: "700", fontSize: 12 },
-  doctor: { color: "#111827", fontWeight: "800", fontSize: 12 },
-  meta: { color: "#374151", fontSize: 11 },
+
 
   bottomBar: {
     position: "absolute",
-    left: 16,
-    right: 16,
-    bottom: 16,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 82,
     backgroundColor: "#0E3A46",
-    borderRadius: 14,
-    height: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 42,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: -2 },
+    shadowRadius: 6,
+    elevation: 8,
   },
-  bottomBtn: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  bottomIcon: { color: "#fff", fontSize: 20 },
-  fab: {
-    position: "absolute",
-    alignSelf: "center",
-    bottom: 12,
-    backgroundColor: "#0E3A46",
-    paddingVertical: 10,
-    paddingHorizontal: 26,
-    borderRadius: 12,
+  bottomBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bottomIcon: {
+    color: "#FFFFFF",
+    fontSize: 22,
   },
 
-  bottomLeft: { position: "absolute", bottom: 0, left: -10, width: 90, height: 80, backgroundColor: "#0E3A46", borderTopRightRadius: 80 },
-  bottomRight: { position: "absolute", bottom: 0, right: -10, width: 90, height: 80, backgroundColor: "#0E3A46", borderTopLeftRadius: 80 },
+
+  chatBotBtn: {
+    position: "absolute",
+    alignSelf: "center",
+    top: -60,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#80a8b3ff",
+    width: 56,
+    height: 58,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#00000013",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  chatIcon: {
+    fontSize: 26,
+  },
 });

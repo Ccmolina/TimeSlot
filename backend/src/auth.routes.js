@@ -1,121 +1,173 @@
 import { Router } from "express";
-import { pool } from "./db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { pool } from "./db.js";
 import crypto from "crypto";
-import { sendResetEmail } from "./mailer.js";
-import { requireAuth } from "./authMiddleware.js";
 
-const router = Router();
+const r = Router();
 
-function signToken(user) {
-  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+function signToken(userId) {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
 
-router.post("/demo", async (_req, res) => {
-  const user = { id: 0, email: "demo@timeslot.local", name: "Demo", last: "" };
-  const token = signToken(user);
-  return res.json({ token, user });
-});
+r.post("/register", async (req, res) => {
+  const { name, last, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "Faltan datos" });
+  }
 
-router.post("/register", async (req, res) => {
   try {
-    const { name, last, email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Datos incompletos" });
-
-    const [dup] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (dup.length) return res.status(409).json({ error: "El correo ya está registrado" });
-
-    const hash = await bcrypt.hash(password, 10);
-    const [result] = await pool.query(
-      "INSERT INTO users (name, last, email, password_hash) VALUES (?, ?, ?, ?)",
-      [name || "", last || "", email, hash]
+    const [existe] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
     );
 
-    const user = { id: result.insertId, email, name: name || "", last: last || "" };
-    const token = signToken(user);
+    if (existe.length > 0) {
+      return res.status(400).json({ error: "El email ya está registrado" });
+    }
+
+ 
+    const hash = await bcrypt.hash(password, 10);
+
+
+    const [result] = await pool.query(
+      "INSERT INTO users (name, last, email, password_hash) VALUES (?, ?, ?, ?)",
+      [name, last || null, email, hash]
+    );
+
+    const user = {
+      id: result.insertId,
+      name,
+      last: last || null,
+      email,
+    };
+
+    const token = signToken(user.id);
+
     return res.json({ token, user });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Error en servidor" });
+  } catch (err) {
+    console.log("REGISTER ERROR:", err);
+    return res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
 
-router.post("/login", async (req, res) => {
+r.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const { email, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-    if (!rows.length) return res.status(401).json({ error: "Credenciales inválidas" });
+    const [rows] = await pool.query(
+      "SELECT id, name, last, email, password_hash FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: "Credenciales inválidas" });
+    }
 
     const user = rows[0];
+
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (!ok) {
+      return res.status(400).json({ error: "Credenciales inválidas" });
+    }
 
-    const token = signToken(user);
-    return res.json({ token, user: { id: user.id, email: user.email, name: user.name, last: user.last } });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Error en servidor" });
+    const token = signToken(user.id);
+
+
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        last: user.last,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.log("LOGIN ERROR:", err);
+    return res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
 
-router.get("/me", requireAuth, async (req, res) => {
-  const [rows] = await pool.query("SELECT id, email, name, last FROM users WHERE id = ?", [req.user.id]);
-  return res.json(rows[0] || null);
-});
+r.post("/forgot", async (req, res) => {
+  const { email } = req.body;
 
-
-router.post("/forgot", async (req, res) => {
   try {
-    const { email } = req.body;
-    const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (!rows.length) return res.json({ ok: true }); // no revelar existencia
+    const [rows] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
 
-    const user = rows[0];
-    const token = crypto.randomBytes(32).toString("hex");
+    if (rows.length === 0) {
+      return res.status(200).json({ ok: true });
+    }
+
+    const userId = rows[0].id;
+
+    const token = crypto.randomBytes(20).toString("hex");
     const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
 
     await pool.query(
-      "INSERT INTO password_resets (user_id, token, expires_at, used) VALUES (?, ?, ?, 0)",
-      [user.id, token, expires]
+      `INSERT INTO password_resets (user_id, token, expires_at)
+       VALUES (?, ?, ?)`,
+      [userId, expires, token]
     );
 
-    const resetUrl = `${process.env.FRONT_URL}?token=${token}`;
-    await sendResetEmail(email, resetUrl);
+
     return res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Error en servidor" });
+  } catch (err) {
+    console.log("FORGOT ERROR:", err);
+    return res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
 
-router.post("/reset", async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    if (!token || !password) return res.status(400).json({ error: "Datos incompletos" });
+r.post("/reset", async (req, res) => {
+  const { token, password } = req.body;
 
+  try {
     const [rows] = await pool.query(
-      "SELECT * FROM password_resets WHERE token = ? AND used = 0 AND expires_at > NOW()",
+      `SELECT id, user_id, expires_at, used 
+       FROM password_resets 
+       WHERE token = ? 
+       ORDER BY id DESC 
+       LIMIT 1`,
       [token]
     );
-    if (!rows.length) return res.status(400).json({ error: "Token inválido o expirado" });
 
-    const pr = rows[0];
+    if (rows.length === 0) {
+      return res.status(400).json({ error: "Token inválido" });
+    }
+
+    const rset = rows[0];
+
+    if (rset.used === 1 || new Date(rset.expires_at) < new Date()) {
+      return res.status(400).json({ error: "Token expirado" });
+    }
+
     const hash = await bcrypt.hash(password, 10);
 
-    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [hash, pr.user_id]);
-    await pool.query("UPDATE password_resets SET used = 1 WHERE id = ?", [pr.id]);
+    await pool.query(
+      "UPDATE users SET password_hash = ? WHERE id = ?",
+      [hash, rset.user_id]
+    );
+
+    await pool.query(
+      "UPDATE password_resets SET used = 1 WHERE id = ?",
+      [rset.id]
+    );
 
     return res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Error en servidor" });
+  } catch (err) {
+    console.log("RESET ERROR:", err);
+    return res.status(500).json({ error: "Error en el servidor" });
   }
 });
 
-export default router;
+export default r;
