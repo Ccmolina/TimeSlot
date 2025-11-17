@@ -18,9 +18,16 @@ export async function api<T = any>(path: string, opts: ApiOpts = {}): Promise<T>
 
   let authHeader: Record<string, string> = {};
 
-  if (useAuth && Platform.OS !== "web") {
+  if (useAuth) {
     try {
-      const token = await AsyncStorage.getItem("token");
+      let token: string | null = null;
+
+      if (Platform.OS === "web") {
+        token = localStorage.getItem("token");
+      } else {
+        token = await AsyncStorage.getItem("token");
+      }
+
       if (token) {
         authHeader.Authorization = `Bearer ${token}`;
       }

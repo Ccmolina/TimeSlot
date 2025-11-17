@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -21,11 +22,16 @@ export default function Home() {
   const [nombre, setNombre] = useState<string>("");
 
   useEffect(() => {
-    SecureStore.getItemAsync("userName").then((value) => {
-      if (value) setNombre(value);
-      else setNombre("Georgia");
-    });
-  }, []);
+  (async () => {
+    if (Platform.OS === "web") {
+      const name = localStorage.getItem("userName");
+      setNombre(name ?? "Georgia");
+    } else {
+      const value = await SecureStore.getItemAsync("userName");
+      setNombre(value ?? "Georgia");
+    }
+  })();
+}, []);
 
   const tieneReservas = reservas.length > 0;
 

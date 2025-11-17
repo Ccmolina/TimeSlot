@@ -4,8 +4,9 @@ import {
   TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../../lib/api";
+
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -36,8 +37,9 @@ export default function Register() {
         },
       });
 
-      await SecureStore.setItemAsync("token", r.token);
-      await SecureStore.setItemAsync("user", JSON.stringify(r.user));
+      await AsyncStorage.setItem("token", r.token);
+      await AsyncStorage.setItem("user", JSON.stringify(r.user));
+
 
       router.replace("/home");
     } catch (e: any) {
