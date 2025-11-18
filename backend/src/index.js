@@ -5,6 +5,7 @@ dotenv.config();
 
 import authRoutes from "./auth.routes.js";
 import reservasRoutes from "./reservasroutes.js";
+import serviciosRoutes from "./admin/servicios.js";
 import { pool } from "./db.js";
 
 const app = express();
@@ -30,6 +31,8 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reservas", reservasRoutes); 
+app.use("/api/servicios", serviciosRoutes);
+app.use("/api/servicios/medicos", serviciosRoutes);
 
 
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
